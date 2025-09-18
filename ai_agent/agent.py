@@ -8,7 +8,7 @@ from .subagents.ui_agent import ui_agent
 
 refinement_loop = LoopAgent(
     name="quality_refinement_loop",
-    max_iterations=5,
+    max_iterations=3,
     sub_agents=[
         main_agent, 
         leaf_agent

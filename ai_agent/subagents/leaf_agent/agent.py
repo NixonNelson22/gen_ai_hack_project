@@ -21,6 +21,8 @@ Example:
 
 from google.adk.agents import Agent
 
+from .tools import exit_loop
+
 leaf_agent = Agent(
     name="leaf_agent",
     model="gemini-2.0-flash",
@@ -37,4 +39,6 @@ leaf_agent = Agent(
         }
     }
     """,
+    tools=[exit_loop],
+    output_key="sensor_data",
 )
