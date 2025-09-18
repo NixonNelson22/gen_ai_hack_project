@@ -1,0 +1,43 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+  <diagram name="Ground Layer Enhanced Architecture" id="enh-arch-001">
+    <mxGraphModel dx="1103" dy="1119" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="groundLayer" value="Ground Layer (On-Premise)" style="swimlane;startSize=20;rounded=1;fillColor=#FFF3E0;fontSize=14;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="20" y="100" width="1160" height="550" as="geometry" />
+        </mxCell>
+        <mxCell id="leafGroup" value="Leaf Agents (Departments)" style="shape=rectangle;fillColor=#FFE0B2;fontSize=12;fontColor=#000000;" parent="groundLayer" vertex="1">
+          <mxGeometry x="70" y="75" width="460" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="leafAgent1" value="Leaf Agent Node (Constraints plus Embedding)" style="shape=rectangle;fillColor=#FFF8E1;fontColor=#000000;" parent="leafGroup" vertex="1">
+          <mxGeometry x="20" y="61.370000000000005" width="400" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="embeddingGen" value="Embedding Generator" style="ellipse;fillColor=#FFD54F;fontSize=10;fontColor=#000000;" parent="leafAgent1" vertex="1">
+          <mxGeometry x="30" y="20" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="agentConstraints" value="Agent Constraints Module" style="ellipse;fillColor=#FFB74D;fontSize=10;fontColor=#000000;" parent="leafAgent1" vertex="1">
+          <mxGeometry x="220" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="mcpServer" value="MCP Server (Protocol Routing and Validation)" style="shape=rectangle;fillColor=#80CBC4;fontSize=12;fontColor=#000000;" parent="groundLayer" vertex="1">
+          <mxGeometry x="590" y="140" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mainAgentNode" value="Main Agent Node" style="shape=rectangle;fillColor=#FFCC80;fontSize=12;fontColor=#000000;" parent="groundLayer" vertex="1">
+          <mxGeometry x="810" y="100" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="connLeafToMCP" style="edgeStyle=elbowEdgeStyle;rounded=0;html=1;endArrow=block;fontColor=#000000;" parent="groundLayer" source="leafAgent1" target="mcpServer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="connMCPToMainAgent" style="edgeStyle=elbowEdgeStyle;rounded=0;html=1;endArrow=block;fontColor=#000000;" parent="groundLayer" source="mcpServer" target="mainAgentNode" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="firestoreLocal" value="Local Firestore DB" style="ellipse;fillColor=#FFD54F;fontSize=11;fontColor=#000000;" parent="groundLayer" vertex="1">
+          <mxGeometry x="844.375" y="246.36636363636364" width="151.25" height="27.272727272727273" as="geometry" />
+        </mxCell>
+        <mxCell id="connMainAgentToFirestore" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontColor=#000000;" parent="groundLayer" source="mainAgentNode" target="firestoreLocal" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
