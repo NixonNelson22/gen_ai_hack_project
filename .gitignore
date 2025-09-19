@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Python venv
+.CementOps/
+
 # C extensions
 *.so
 
