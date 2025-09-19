@@ -8,5 +8,5 @@ dependencies = [
     "dotenv>=0.9.9",
     "google-adk>=1.14.1",
     "httpx>=0.28.1",
-    "python-a2a>=0.5.10",
+    "python-a2a[all]>=0.5.10",
 ]

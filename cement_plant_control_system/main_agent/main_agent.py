@@ -6,7 +6,7 @@ from python_a2a import A2AServer, skill, run_server, agent
     description="main administrative agent"
 )
 class MainAgent(A2AServer):
-    @skill(name="constraint_server")
+    @skill(name="constraint")
     def constraint(self, value):
         return {"temp_limit": value}
 
