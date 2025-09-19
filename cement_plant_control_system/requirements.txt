@@ -1,4 +1,6 @@
-
-google-cloud-pubsub
-google-cloud-firestore
-streamlit
+fastapi==0.95.2
+uvicorn==0.22.0
+httpx==0.24.1
+pydantic==1.10.12
+streamlit==1.26.0
+python-dotenv==1.0.0
