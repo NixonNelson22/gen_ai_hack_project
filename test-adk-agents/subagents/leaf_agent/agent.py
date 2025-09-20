@@ -38,6 +38,10 @@ leaf_agent = Agent(
             "vibration": 3.2
         }
     }
+    IMPORTANT:
+    - ONLY RESPOND IN JSON FORMAT AS SHOWN ABOVE.
+    - DO NOT ADD ANY EXTRA INFORMATION OR EXPLANATION.
+    - DO NOT CHANGE THE VALUES OF THE PARAMETERS.
     """,
     tools=[exit_loop],
     output_key="sensor_data",
