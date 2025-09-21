@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .agents, .tasks, .results { margin-bottom: 20px; }
+        .agents table, .results table { width: 100%; border-collapse: collapse; }
+        .agents th, .agents td, .results th, .results td { border: 1px solid #ddd; padding: 8px; }
+        .agents th, .results th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>&#128640; Cement Plant Operator Dashboard</h1>
+
+        <div class="agents" hx-get="/dashboard/agents" hx-trigger="load, every 5s">
+            <!-- Agent list will be loaded here -->
+        </div>
+
+        <div class="tasks">
+            <h2>Send Task</h2>
+            <form hx-post="/dashboard/send_task" hx-target="#task-response" hx-swap="innerHTML">
+                <label for="agent_id">Target Agent ID:</label>
+                <select id="agent_id" name="agent_id">
+                    <!-- Agent options will be loaded here -->
+                </select>
+                <br><br>
+                <label for="task_type">Task Type:</label>
+                <select id="task_type" name="task_type">
+                    <option value="tsr_optimize">tsr_optimize</option>
+                    <option value="sample">sample</option>
+                </select>
+                <br><br>
+                <label for="payload">Payload (JSON):</label>
+                <textarea id="payload" name="payload" rows="4" cols="50">{"example": 1}</textarea>
+                <br><br>
+                <button type="submit">Send Task</button>
+            </form>
+            <div id="task-response"></div>
+        </div>
+
+        <div class="results" hx-get="/dashboard/results" hx-trigger="load, every 5s">
+            <!-- Results will be loaded here -->
+        </div>
+    </div>
+</body>
+</html>

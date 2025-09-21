@@ -11,9 +11,13 @@ import os
 import uuid
 from dotenv import load_dotenv
 from cement_plant_control_system.data_stream.simulator import generate_plant_data  # simulated plant metrics
+from cement_plant_control_system.log_config import setup_logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Set up logging
+logger = setup_logging(__name__)
 
 # Base URL for MCP server
 MCP_BASE = os.getenv("MCP_BASE", "http://127.0.0.1:8000")
@@ -36,35 +40,55 @@ async def register():
     payload = {"id": AGENT_ID, "name": AGENT_NAME, "endpoint": ""}
 
     async with httpx.AsyncClient() as client:
-        r = await client.post(url, json=payload)
-        if r.status_code != 200:
-            print(f"[leaf] registration failed: {r.status_code} {r.text}")
-        else:
-            print(f"[leaf] registered id={AGENT_ID}")
+        try:
+            r = await client.post(url, json=payload)
+            r.raise_for_status()  # Raise an exception for bad status codes
+            logger.info(f"Agent registered with ID: {AGENT_ID}")
+        except httpx.RequestError as e:
+            logger.error(f"Failed to register agent: {e}")
 
 # -------------------------
 # Optimization logic
 # -------------------------
-def optimize_grinding(plant_data):
+def optimize_tsr(plant_data):
     """
-    Simple rule-based optimization for grinding process.
+    Simple rule-based optimization for TSR.
     Evaluates plant metrics and returns recommendations.
     """
     actions = []
+    try:
+        af_calorific = plant_data.get("Fuel_Calorific_Value", 4500)
+        ff_calorific = 4500  # Assuming a default for fossil fuel
+        af_flow = plant_data.get("AF_Fuel_Flow_Setpoint", 0)
+        ff_flow = plant_data.get("Fossil_Fuel_Flow_SP", 0)
 
-    # Apply rules based on plant metrics
-    if plant_data["grinding_power"] > 28:
-        actions.append("Reduce mill speed by 5%")
-    if plant_data["kiln_temp"] > 1480:
-        actions.append("Reduce fuel input by 3%")
-    if plant_data["fuel_mix"]["AF"] < 30:
-        actions.append("Increase alternative fuel to 30% TSR")
-    if plant_data["raw_mix_lime"] > 65:
-        actions.append("Reduce lime feed slightly")
-    if plant_data["emissions"]["CO2"] > 850:
-        actions.append("Reduce fossil fuel proportion")
+        total_energy = (af_flow * af_calorific) + (ff_flow * ff_calorific)
+        if total_energy > 0:
+            tsr_current = ((af_flow * af_calorific) / total_energy) * 100
+        else:
+            tsr_current = 0
 
-    # Default action if no rules triggered
+        tsr_target = plant_data.get("TSR_Target_Percentage", 30)
+
+        if tsr_current < tsr_target:
+            actions.append(f"Increase AF Fuel Flow to meet TSR target of {tsr_target}%. Current TSR is {tsr_current:.2f}%")
+
+    except Exception as e:
+        logger.error(f"Error in TSR calculation: {e}")
+        actions.append(f"Error in TSR calculation: {e}")
+
+    if plant_data.get("Burning_Zone_Temp_SP", 1450) < 1400:
+        actions.append("Increase fuel flow to raise burning zone temperature.")
+
+    if plant_data.get("Oxygen_Concentration_SP", 2) < 1.5:
+        actions.append("Increase air flow to ensure complete combustion.")
+
+    if plant_data.get("CO_Emission_Limit_SP", 850) > 850:
+        actions.append("Reduce fuel flow or increase air to lower CO emissions.")
+
+    if plant_data.get("NOx_Emission_Limit_SP", 450) > 450:
+        actions.append("Optimize combustion temperature to reduce NOx emissions.")
+
     if not actions:
         actions.append("No changes needed — operating within optimal range")
 
@@ -83,7 +107,11 @@ async def report_result(client, task_id, result):
         "task_id": task_id,
         "result": result,
     }
-    await client.post(url, json=payload)
+    try:
+        await client.post(url, json=payload)
+        logger.info(f"Successfully reported result for task {task_id}")
+    except httpx.RequestError as e:
+        logger.error(f"Failed to report result for task {task_id}: {e}")
 
 # -------------------------
 # Polling loop for tasks
@@ -91,49 +119,39 @@ async def report_result(client, task_id, result):
 async def poll_loop():
     """
     Continuous loop that fetches tasks from MCP server, processes them,
-    and reports results. Handles 'grind_optimize' and 'sample' task types.
+    and reports results. Handles 'tsr_optimize' and 'sample' task types.
     """
     async with httpx.AsyncClient() as client:
         while True:
             try:
-                # Fetch task for this agent
                 r = await client.get(f"{MCP_BASE}/fetch_task/{AGENT_ID}")
-                if r.status_code != 200:
-                    # Non-200 responses could mean queue not ready
-                    print(f"[leaf] fetch_task failed: {r.status_code} {r.text}")
-                    await asyncio.sleep(POLL_INTERVAL)
-                    continue
-
+                r.raise_for_status()
                 data = r.json()
+            except httpx.RequestError as e:
+                logger.error(f"Error fetching task: {e}")
+                await asyncio.sleep(POLL_INTERVAL)
+                continue
             except Exception as e:
-                print(f"[leaf] error fetching/parsing task: {e}")
+                logger.error(f"Error parsing task response: {e}")
                 await asyncio.sleep(POLL_INTERVAL)
                 continue
 
-            # Extract task from response
             task = data.get("task")
             if task:
                 task_id = task["task_id"]
-                print(f"[leaf] got task {task['task_type']} id={task_id}")
+                logger.info(f"Received task {task['task_type']} with ID {task_id}")
 
-                if task["task_type"] == "grind_optimize":
-                    # Generate simulated plant metrics
+                if task["task_type"] == "tsr_optimize":
                     plant_data = generate_plant_data()
-                    print("[leaf] running grind optimization on:", plant_data)
-
-                    # Compute optimization recommendations
-                    recommendations = optimize_grinding(plant_data)
-                    print("[leaf] optimization recommendations:", recommendations)
-
-                    # Report results back to MCP
+                    logger.debug(f"Running TSR optimization on: {plant_data}")
+                    recommendations = optimize_tsr(plant_data)
+                    logger.info(f"Optimization recommendations: {recommendations}")
                     await report_result(client, task_id, str(recommendations))
 
                 elif task["task_type"] == "sample":
-                    # Simply echo payload
-                    print("[leaf] sample task payload:", task["payload"])
+                    logger.info(f"Sample task payload: {task['payload']}")
                     await report_result(client, task_id, f"Echo: {task['payload']}")
 
-            # Wait before polling again
             await asyncio.sleep(POLL_INTERVAL)
 
 # -------------------------
